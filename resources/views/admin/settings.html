@@ -1,0 +1,1440 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Settings – DIU Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Plus Jakarta Sans", "sans-serif"] },
+            colors: {
+              accent: "#6366f1",
+              "accent-light": "#818cf8",
+              surface: "#0f1117",
+              card: "#161b27",
+              border: "#232b3e",
+              t1: "#f1f5f9",
+              t2: "#94a3b8",
+              tm: "#64748b",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background: #0f1117;
+        color: #f1f5f9;
+      }
+
+      #sidebar {
+        transition: transform 0.3s ease;
+      }
+      #sb-overlay {
+        display: none;
+      }
+
+      /* Toggle */
+      .toggle-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .toggle-track {
+        width: 42px;
+        height: 24px;
+        background: #232b3e;
+        border-radius: 9999px;
+        position: relative;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .toggle-input:checked ~ .toggle-track {
+        background: #6366f1;
+      }
+      .toggle-thumb {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 18px;
+        height: 18px;
+        border-radius: 9999px;
+        background: #fff;
+        transition: transform 0.2s;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+      }
+      .toggle-input:checked ~ .toggle-track .toggle-thumb {
+        transform: translateX(18px);
+      }
+
+      /* Toast */
+      #toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        background: #1c2333;
+        border: 1px solid #232b3e;
+        border-radius: 12px;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #f1f5f9;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        transform: translateY(80px);
+        opacity: 0;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      #toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      /* Dropdown */
+      .dropdown {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 8px);
+        z-index: 200;
+        background: #161b27;
+        border: 1px solid #232b3e;
+        border-radius: 14px;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+        min-width: 260px;
+        overflow: hidden;
+      }
+      .dropdown.open {
+        display: block;
+      }
+
+      /* Modal */
+      #danger-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 500;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+      }
+      #danger-modal.open {
+        display: flex;
+      }
+
+      ::-webkit-scrollbar {
+        width: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #232b3e;
+        border-radius: 99px;
+      }
+
+      @media (max-width: 768px) {
+        #sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          z-index: 300;
+          transform: translateX(-100%);
+        }
+        #sidebar.open {
+          transform: translateX(0);
+        }
+        #sb-overlay.active {
+          display: block;
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 299;
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <div class="flex min-h-screen">
+      <!-- Overlay -->
+      <div id="sb-overlay" onclick="closeSidebar()"></div>
+
+      <!-- SIDEBAR -->
+      <aside
+        id="sidebar"
+        class="w-[230px] min-h-screen flex flex-col bg-[#161b27] border-r border-[#232b3e] shrink-0 md:relative"
+      >
+        <div
+          class="flex items-center gap-3 px-5 py-5 border-b border-[#232b3e]"
+        >
+          <div
+            class="w-9 h-9 rounded-xl bg-accent flex items-center justify-center text-white text-base shadow-lg shadow-accent/30"
+          >
+            <i class="fa-solid fa-bus-simple"></i>
+          </div>
+          <span class="text-lg font-extrabold text-t1 tracking-tight"
+            >DIU<span class="text-accent">Admin</span></span
+          >
+        </div>
+
+        <nav class="flex flex-col gap-1 px-3 py-4 flex-1">
+          <a
+            href="dashboard.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-t2 hover:bg-[rgba(99,102,241,0.12)] hover:text-accent transition-all text-sm font-semibold"
+          >
+            <i class="fa-solid fa-gauge-high w-4 text-center"></i
+            ><span>Dashboard</span>
+          </a>
+
+          <div>
+            <button
+              onclick="toggleSub('sub-users', 'chev-users')"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-t2 hover:bg-[rgba(99,102,241,0.12)] hover:text-accent transition-all text-sm font-semibold"
+            >
+              <i class="fa-solid fa-users w-4 text-center"></i
+              ><span class="flex-1 text-left">Users</span>
+              <i
+                class="fa-solid fa-chevron-down text-xs transition-transform duration-200"
+                id="chev-users"
+              ></i>
+            </button>
+            <div
+              id="sub-users"
+              class="hidden pl-7 flex flex-col gap-0.5 mt-0.5"
+            >
+              <a
+                href="users.html"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg text-tm hover:text-accent text-xs font-semibold hover:bg-[rgba(99,102,241,0.12)] transition-all"
+                ><i class="fa-solid fa-list w-3"></i> All Users</a
+              >
+              <a
+                href="add-user.html"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg text-tm hover:text-accent text-xs font-semibold hover:bg-[rgba(99,102,241,0.12)] transition-all"
+                ><i class="fa-solid fa-user-plus w-3"></i> Add User</a
+              >
+            </div>
+          </div>
+
+          <div>
+            <button
+              onclick="toggleSub('sub-cars', 'chev-cars')"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-t2 hover:bg-[rgba(99,102,241,0.12)] hover:text-accent transition-all text-sm font-semibold"
+            >
+              <i class="fa-solid fa-bus w-4 text-center"></i
+              ><span class="flex-1 text-left">Cars / Buses</span>
+              <i
+                class="fa-solid fa-chevron-down text-xs transition-transform duration-200"
+                id="chev-cars"
+              ></i>
+            </button>
+            <div id="sub-cars" class="hidden pl-7 flex flex-col gap-0.5 mt-0.5">
+              <a
+                href="cars.html"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg text-tm hover:text-accent text-xs font-semibold hover:bg-[rgba(99,102,241,0.12)] transition-all"
+                ><i class="fa-solid fa-list w-3"></i> All Cars</a
+              >
+              <a
+                href="add-car.html"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg text-tm hover:text-accent text-xs font-semibold hover:bg-[rgba(99,102,241,0.12)] transition-all"
+                ><i class="fa-solid fa-plus w-3"></i> Add Car</a
+              >
+            </div>
+          </div>
+
+          <div class="my-2 border-t border-[#232b3e]"></div>
+
+          <a
+            href="settings.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[rgba(99,102,241,0.12)] text-accent text-sm font-semibold"
+          >
+            <i class="fa-solid fa-gear w-4 text-center"></i
+            ><span>Settings</span>
+          </a>
+          <a
+            href="profile.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-t2 hover:bg-[rgba(99,102,241,0.12)] hover:text-accent transition-all text-sm font-semibold"
+          >
+            <i class="fa-solid fa-user-circle w-4 text-center"></i
+            ><span>Profile</span>
+          </a>
+        </nav>
+
+        <div class="px-3 pb-4 border-t border-[#232b3e] pt-3">
+          <button
+            onclick="
+              if (confirm('Logout?')) window.location.href = '../login.html';
+            "
+            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 text-sm font-semibold transition-all"
+          >
+            <i class="fa-solid fa-right-from-bracket w-4 text-center"></i
+            ><span>Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <div class="flex flex-col flex-1 min-w-0">
+        <!-- Topbar -->
+        <header
+          class="sticky top-0 z-[100] flex items-center gap-3 px-4 md:px-6 py-3.5 bg-[#161b27]/90 backdrop-blur border-b border-[#232b3e]"
+        >
+          <button
+            onclick="toggleSidebar()"
+            class="md:hidden w-9 h-9 flex items-center justify-center rounded-xl text-t2 hover:bg-[#1c2333] hover:text-t1 transition-all"
+          >
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div>
+            <div class="text-sm font-bold text-t1 leading-tight">Settings</div>
+            <div class="text-xs text-tm">
+              Manage platform preferences and controls
+            </div>
+          </div>
+          <div class="flex-1"></div>
+
+          <!-- Notifications -->
+          <div class="relative">
+            <button
+              onclick="toggleDd('notif-dd')"
+              class="relative w-9 h-9 flex items-center justify-center rounded-xl text-t2 hover:bg-[#1c2333] hover:text-t1 transition-all"
+            >
+              <i class="fa-regular fa-bell text-sm"></i>
+              <span
+                id="notif-badge"
+                class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-accent"
+              ></span>
+            </button>
+            <div class="dropdown" id="notif-dd" style="min-width: 290px">
+              <div
+                class="flex items-center justify-between px-4 py-3 border-b border-[#232b3e]"
+              >
+                <span
+                  class="text-xs font-bold text-t1 flex items-center gap-1.5"
+                  ><i class="fa-solid fa-bell text-accent"></i>
+                  Notifications</span
+                >
+                <button
+                  onclick="markAllRead()"
+                  class="text-xs text-accent font-semibold hover:underline"
+                >
+                  Mark all read
+                </button>
+              </div>
+              <div class="flex flex-col">
+                <div
+                  class="flex items-start gap-3 px-4 py-3 bg-[rgba(99,102,241,0.08)] border-b border-[#232b3e] hover:bg-[#232b3e] transition-colors cursor-pointer"
+                >
+                  <div
+                    class="w-8 h-8 rounded-xl bg-accent/20 flex items-center justify-center text-accent text-xs flex-shrink-0"
+                  >
+                    <i class="fa-solid fa-user-plus"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-t1">
+                      New student registered
+                    </div>
+                    <div class="text-[11px] text-tm">Karim Hassan joined</div>
+                    <div class="text-[10px] text-tm mt-0.5">2 min ago</div>
+                  </div>
+                </div>
+                <div
+                  class="flex items-start gap-3 px-4 py-3 bg-[rgba(99,102,241,0.08)] border-b border-[#232b3e] hover:bg-[#232b3e] transition-colors cursor-pointer"
+                >
+                  <div
+                    class="w-8 h-8 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-400 text-xs flex-shrink-0"
+                  >
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-t1">
+                      Route 07 delayed
+                    </div>
+                    <div class="text-[11px] text-tm">
+                      Driver reported 20 min delay
+                    </div>
+                    <div class="text-[10px] text-tm mt-0.5">15 min ago</div>
+                  </div>
+                </div>
+                <div
+                  class="flex items-start gap-3 px-4 py-3 bg-[rgba(99,102,241,0.08)] border-b border-[#232b3e] hover:bg-[#232b3e] transition-colors cursor-pointer"
+                >
+                  <div
+                    class="w-8 h-8 rounded-xl bg-accent/20 flex items-center justify-center text-accent text-xs flex-shrink-0"
+                  >
+                    <i class="fa-solid fa-bus"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-t1">
+                      Bus B maintenance due
+                    </div>
+                    <div class="text-[11px] text-tm">Schedule service soon</div>
+                    <div class="text-[10px] text-tm mt-0.5">1 hr ago</div>
+                  </div>
+                </div>
+                <div
+                  class="flex items-start gap-3 px-4 py-3 bg-[rgba(99,102,241,0.08)] hover:bg-[#232b3e] transition-colors cursor-pointer"
+                >
+                  <div
+                    class="w-8 h-8 rounded-xl bg-sky-500/20 flex items-center justify-center text-sky-400 text-xs flex-shrink-0"
+                  >
+                    <i class="fa-solid fa-circle-info"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-t1">
+                      System update ready
+                    </div>
+                    <div class="text-[11px] text-tm">Admin panel v2.1</div>
+                    <div class="text-[10px] text-tm mt-0.5">3 hrs ago</div>
+                  </div>
+                </div>
+              </div>
+              <div class="text-center py-2.5 border-t border-[#232b3e]">
+                <a
+                  href="#"
+                  class="text-xs text-accent font-semibold hover:underline"
+                  >View all</a
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- User -->
+          <div class="relative">
+            <button
+              onclick="toggleDd('user-dd')"
+              class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-[#1c2333] transition-all"
+            >
+              <div
+                class="w-8 h-8 rounded-xl bg-accent/20 flex items-center justify-center text-accent text-sm"
+              >
+                <i class="fa-solid fa-user-shield"></i>
+              </div>
+              <div class="hidden sm:block text-left">
+                <div class="text-xs font-bold text-t1 leading-tight">Admin</div>
+                <div class="text-[10px] text-tm">Super Admin</div>
+              </div>
+              <i
+                class="fa-solid fa-chevron-down text-[10px] text-tm hidden sm:block"
+              ></i>
+            </button>
+            <div class="dropdown" id="user-dd">
+              <div
+                class="flex items-center gap-3 px-4 py-3.5 border-b border-[#232b3e]"
+              >
+                <div
+                  class="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center text-accent"
+                >
+                  <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-t1">Admin User</div>
+                  <div class="text-xs text-tm">admin@diu.edu.bd</div>
+                </div>
+              </div>
+              <div class="p-1.5 flex flex-col gap-0.5">
+                <a
+                  href="profile.html"
+                  class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-t2 hover:bg-[rgba(99,102,241,0.12)] hover:text-accent transition-all font-semibold"
+                  ><i class="fa-regular fa-user w-4 text-center"></i> Profile</a
+                >
+                <a
+                  href="settings.html"
+                  class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-t2 hover:bg-[rgba(99,102,241,0.12)] hover:text-accent transition-all font-semibold"
+                  ><i class="fa-solid fa-gear w-4 text-center"></i> Settings</a
+                >
+                <div class="my-1 border-t border-[#232b3e]"></div>
+                <a
+                  href="../login.html"
+                  class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-all font-semibold"
+                  ><i
+                    class="fa-solid fa-right-from-bracket w-4 text-center"
+                  ></i>
+                  Logout</a
+                >
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Content -->
+        <main class="flex-1 p-4 md:p-6 overflow-auto">
+          <!-- Heading -->
+          <div class="mb-6">
+            <div class="flex items-center gap-2 text-xs text-tm mb-1.5">
+              <a
+                href="dashboard.html"
+                class="hover:text-accent transition-colors"
+                ><i class="fa-solid fa-house"></i
+              ></a>
+              <i class="fa-solid fa-chevron-right text-[9px]"></i>
+              <span class="text-t2 font-semibold">Settings</span>
+            </div>
+            <h1 class="text-xl font-extrabold text-t1">Platform Settings</h1>
+            <p class="text-sm text-tm">
+              Configure system-wide preferences for DIU Routes
+            </p>
+          </div>
+
+          <div class="flex flex-col gap-4 max-w-2xl">
+            <!-- ── General ── -->
+            <div
+              class="bg-[#161b27] rounded-2xl border border-[#232b3e] overflow-hidden"
+            >
+              <div
+                class="flex items-center gap-3 px-5 py-4 border-b border-[#232b3e]"
+              >
+                <div
+                  class="w-9 h-9 rounded-xl bg-[rgba(99,102,241,0.12)] flex items-center justify-center text-accent text-sm flex-shrink-0"
+                >
+                  <i class="fa-solid fa-sliders"></i>
+                </div>
+                <div>
+                  <div class="text-sm font-extrabold text-t1">General</div>
+                  <div class="text-[11px] text-tm">Core platform behaviour</div>
+                </div>
+              </div>
+              <div class="divide-y divide-[#232b3e]">
+                <!-- row -->
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-globe"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Maintenance Mode
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Take the platform offline for maintenance
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-maint"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#232b3e] text-tm flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> Off</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-maint"
+                        onchange="ht('sw-maint', 'tag-maint', 'On', 'Off')" />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Allow New Registrations
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Let new users sign up via Google
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-reg"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> On</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-reg"
+                        checked
+                        onchange="ht('sw-reg', 'tag-reg', 'On', 'Off')" />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Force Email Verification
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Require users to verify @diu.edu.bd email
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-email-ver"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> On</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-email-ver"
+                        checked
+                        onchange="
+                          ht('sw-email-ver', 'tag-email-ver', 'On', 'Off')
+                        " />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-moon"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Auto Dark Mode for Users
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Follow system theme for all users
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-dark"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> On</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-dark"
+                        checked
+                        onchange="ht('sw-dark', 'tag-dark', 'On', 'Off')" />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Tracking & Map ── -->
+            <div
+              class="bg-[#161b27] rounded-2xl border border-[#232b3e] overflow-hidden"
+            >
+              <div
+                class="flex items-center gap-3 px-5 py-4 border-b border-[#232b3e]"
+              >
+                <div
+                  class="w-9 h-9 rounded-xl bg-[rgba(99,102,241,0.12)] flex items-center justify-center text-accent text-sm flex-shrink-0"
+                >
+                  <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <div>
+                  <div class="text-sm font-extrabold text-t1">
+                    Tracking & Map
+                  </div>
+                  <div class="text-[11px] text-tm">
+                    GPS and live map settings
+                  </div>
+                </div>
+              </div>
+              <div class="divide-y divide-[#232b3e]">
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-satellite-dish"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Live GPS Tracking
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Enable real-time driver location updates
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-gps"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> On</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-gps"
+                        checked
+                        onchange="ht('sw-gps', 'tag-gps', 'On', 'Off')" />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-eye"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Student Location Visible to Drivers
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Allow drivers to see student pick-up pins
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-stu-loc"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> On</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-stu-loc"
+                        checked
+                        onchange="
+                          ht('sw-stu-loc', 'tag-stu-loc', 'On', 'Off')
+                        " />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-route"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Auto Route Assignment
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Automatically assign nearest route to drivers
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-auto-route"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#232b3e] text-tm flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> Off</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-auto-route"
+                        onchange="
+                          ht('sw-auto-route', 'tag-auto-route', 'On', 'Off')
+                        " />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-map"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Show Route Paths on Map
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Display polyline routes on student map view
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-paths"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> On</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-paths"
+                        checked
+                        onchange="ht('sw-paths', 'tag-paths', 'On', 'Off')" />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Notifications ── -->
+            <div
+              class="bg-[#161b27] rounded-2xl border border-[#232b3e] overflow-hidden"
+            >
+              <div
+                class="flex items-center gap-3 px-5 py-4 border-b border-[#232b3e]"
+              >
+                <div
+                  class="w-9 h-9 rounded-xl bg-[rgba(99,102,241,0.12)] flex items-center justify-center text-accent text-sm flex-shrink-0"
+                >
+                  <i class="fa-regular fa-bell"></i>
+                </div>
+                <div>
+                  <div class="text-sm font-extrabold text-t1">
+                    Notifications
+                  </div>
+                  <div class="text-[11px] text-tm">
+                    System alerts and push settings
+                  </div>
+                </div>
+              </div>
+              <div class="divide-y divide-[#232b3e]">
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-bell"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Push Notifications
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Send bus arrival alerts to students
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-push"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> On</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-push"
+                        checked
+                        onchange="ht('sw-push', 'tag-push', 'On', 'Off')" />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">Delay Alerts</div>
+                      <div class="text-[11px] text-tm">
+                        Notify students when a route is delayed
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-delay"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> On</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-delay"
+                        checked
+                        onchange="ht('sw-delay', 'tag-delay', 'On', 'Off')" />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Email Reports to Admin
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Send daily activity summary via email
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-email-rep"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#232b3e] text-tm flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> Off</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-email-rep"
+                        onchange="
+                          ht('sw-email-rep', 'tag-email-rep', 'On', 'Off')
+                        " />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Admin Login Alerts
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Notify on each admin panel login
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-admin-alert"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> On</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-admin-alert"
+                        checked
+                        onchange="
+                          ht('sw-admin-alert', 'tag-admin-alert', 'On', 'Off')
+                        " />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Security ── -->
+            <div
+              class="bg-[#161b27] rounded-2xl border border-[#232b3e] overflow-hidden"
+            >
+              <div
+                class="flex items-center gap-3 px-5 py-4 border-b border-[#232b3e]"
+              >
+                <div
+                  class="w-9 h-9 rounded-xl bg-[rgba(99,102,241,0.12)] flex items-center justify-center text-accent text-sm flex-shrink-0"
+                >
+                  <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                  <div class="text-sm font-extrabold text-t1">Security</div>
+                  <div class="text-[11px] text-tm">
+                    Access control and audit
+                  </div>
+                </div>
+              </div>
+              <div class="divide-y divide-[#232b3e]">
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Session Timeout
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Auto logout after 30 min of inactivity
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-sess"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> On</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-sess"
+                        checked
+                        onchange="ht('sw-sess', 'tag-sess', 'On', 'Off')" />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-file-lines"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">Audit Logging</div>
+                      <div class="text-[11px] text-tm">
+                        Log all admin actions for review
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-audit"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> On</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-audit"
+                        checked
+                        onchange="ht('sw-audit', 'tag-audit', 'On', 'Off')" />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[rgba(99,102,241,0.08)] flex items-center justify-center text-accent text-xs flex-shrink-0"
+                    >
+                      <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-bold text-t1">
+                        Two-Factor Authentication
+                      </div>
+                      <div class="text-[11px] text-tm">
+                        Require 2FA for all admin logins
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 ml-4 flex-shrink-0">
+                    <span
+                      id="tag-2fa"
+                      class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#232b3e] text-tm flex items-center gap-1"
+                      ><i class="fa-solid fa-circle text-[5px]"></i> Off</span
+                    >
+                    <label class="relative inline-flex cursor-pointer"
+                      ><input
+                        type="checkbox"
+                        class="toggle-input"
+                        id="sw-2fa"
+                        onchange="ht('sw-2fa', 'tag-2fa', 'On', 'Off')" />
+                      <div class="toggle-track">
+                        <div class="toggle-thumb"></div></div
+                    ></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── System Info ── -->
+            <div class="bg-[#161b27] rounded-2xl border border-[#232b3e] p-5">
+              <div
+                class="text-xs font-extrabold text-t2 uppercase tracking-widest mb-4"
+              >
+                System Information
+              </div>
+              <div class="grid grid-cols-2 gap-4 mb-5">
+                <div>
+                  <div
+                    class="text-[10px] font-bold uppercase tracking-widest text-tm mb-1"
+                  >
+                    Platform Version
+                  </div>
+                  <div class="text-sm font-bold text-t1">DIU Routes v2.0.1</div>
+                </div>
+                <div>
+                  <div
+                    class="text-[10px] font-bold uppercase tracking-widest text-tm mb-1"
+                  >
+                    Last Updated
+                  </div>
+                  <div class="text-sm font-bold text-t1">March 2, 2025</div>
+                </div>
+                <div>
+                  <div
+                    class="text-[10px] font-bold uppercase tracking-widest text-tm mb-1"
+                  >
+                    Maps API
+                  </div>
+                  <div class="text-sm font-bold text-t1">
+                    Google Maps JS API v3
+                  </div>
+                </div>
+                <div>
+                  <div
+                    class="text-[10px] font-bold uppercase tracking-widest text-tm mb-1"
+                  >
+                    Auth Provider
+                  </div>
+                  <div class="text-sm font-bold text-t1">
+                    Firebase Google OAuth
+                  </div>
+                </div>
+                <div>
+                  <div
+                    class="text-[10px] font-bold uppercase tracking-widest text-tm mb-1"
+                  >
+                    Database
+                  </div>
+                  <div class="text-sm font-bold text-t1">MongoDB Atlas</div>
+                </div>
+                <div>
+                  <div
+                    class="text-[10px] font-bold uppercase tracking-widest text-tm mb-1"
+                  >
+                    Environment
+                  </div>
+                  <span
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 text-[11px] font-bold border border-emerald-500/20"
+                    >Production</span
+                  >
+                </div>
+              </div>
+              <div class="pt-4 border-t border-[#232b3e] flex flex-wrap gap-2">
+                <button
+                  onclick="showToast('Cache cleared.', 'success')"
+                  class="flex items-center gap-2 px-3 py-2 rounded-xl text-t2 hover:bg-[#232b3e] hover:text-t1 text-xs font-bold border border-[#232b3e] transition-all"
+                >
+                  <i class="fa-solid fa-trash-can-arrow-up"></i> Clear Cache
+                </button>
+                <button
+                  onclick="showToast('Logs exported.', 'success')"
+                  class="flex items-center gap-2 px-3 py-2 rounded-xl text-t2 hover:bg-[#232b3e] hover:text-t1 text-xs font-bold border border-[#232b3e] transition-all"
+                >
+                  <i class="fa-solid fa-file-export"></i> Export Logs
+                </button>
+                <button
+                  onclick="showToast('Backup started…', 'success')"
+                  class="flex items-center gap-2 px-3 py-2 rounded-xl text-t2 hover:bg-[#232b3e] hover:text-t1 text-xs font-bold border border-[#232b3e] transition-all"
+                >
+                  <i class="fa-solid fa-database"></i> Backup Now
+                </button>
+              </div>
+            </div>
+
+            <!-- ── Danger Zone ── -->
+            <div
+              class="bg-[#161b27] rounded-2xl border border-red-500/30 overflow-hidden"
+            >
+              <div
+                class="flex items-center gap-3 px-5 py-4 border-b border-red-500/20 bg-red-500/5"
+              >
+                <div
+                  class="w-9 h-9 rounded-xl bg-red-500/15 flex items-center justify-center text-red-400 text-sm flex-shrink-0"
+                >
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                  <div class="text-sm font-extrabold text-red-400">
+                    Danger Zone
+                  </div>
+                  <div class="text-[11px] text-tm">
+                    Irreversible system actions
+                  </div>
+                </div>
+              </div>
+              <div class="p-5">
+                <p class="text-sm text-t2 leading-relaxed mb-4">
+                  These actions affect the entire platform and
+                  <strong class="text-red-400">cannot be undone</strong>.
+                  Proceed only if you are absolutely sure.
+                </p>
+                <div class="flex flex-wrap gap-3">
+                  <button
+                    onclick="
+                      confirmReset(
+                        'Clear All User Data',
+                        'This will remove all user accounts permanently.',
+                      )
+                    "
+                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-bold border border-red-500/25 hover:border-red-500/50 transition-all"
+                  >
+                    <i class="fa-solid fa-users-slash"></i> Clear User Data
+                  </button>
+                  <button
+                    onclick="
+                      confirmReset(
+                        'Reset Platform',
+                        'This will factory-reset all settings.',
+                      )
+                    "
+                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-bold border border-red-500/25 hover:border-red-500/50 transition-all"
+                  >
+                    <i class="fa-solid fa-rotate-left"></i> Reset Platform
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /stack -->
+        </main>
+
+        <!-- Footer -->
+        <footer
+          class="px-6 py-3.5 border-t border-[#232b3e] flex items-center justify-between text-[11px] text-tm"
+        >
+          <span>© 2025 DIU Routes · Dhaka International University</span>
+          <span class="flex items-center gap-1.5"
+            ><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Admin
+            Panel</span
+          >
+        </footer>
+      </div>
+    </div>
+
+    <!-- Danger Modal -->
+    <div id="danger-modal">
+      <div
+        class="bg-[#161b27] border border-red-500/30 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl"
+      >
+        <div
+          class="w-12 h-12 rounded-xl bg-red-500/15 flex items-center justify-center text-red-400 text-xl mx-auto mb-4"
+        >
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div
+          class="text-base font-extrabold text-t1 text-center mb-1"
+          id="dm-title"
+        >
+          Are you sure?
+        </div>
+        <div class="text-sm text-tm text-center mb-5" id="dm-desc">
+          This action is irreversible.
+        </div>
+
+        <div id="dm-step1">
+          <div class="flex gap-2.5">
+            <button
+              onclick="closeDM()"
+              class="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold text-t2 border border-[#232b3e] hover:bg-[#232b3e] transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onclick="dmStep2()"
+              class="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-all"
+            >
+              Yes, Continue
+            </button>
+          </div>
+        </div>
+
+        <div id="dm-step2" class="hidden">
+          <label class="block text-xs font-bold text-t2 mb-1.5"
+            >Type <strong class="text-red-400 font-mono">CONFIRM</strong> to
+            proceed</label
+          >
+          <input
+            id="dm-inp"
+            placeholder="CONFIRM"
+            oninput="checkDM()"
+            autocomplete="off"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#0f1117] border border-[#232b3e] text-sm text-t1 font-semibold focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/20 transition-all placeholder-tm mb-3"
+          />
+          <div class="flex gap-2.5">
+            <button
+              onclick="closeDM()"
+              class="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold text-t2 border border-[#232b3e] hover:bg-[#232b3e] transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              id="dm-final"
+              onclick="doDM()"
+              class="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-red-500 opacity-40 pointer-events-none transition-all"
+            >
+              Execute
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast">
+      <i class="fa-solid fa-circle-check text-emerald-400"></i>
+      <span id="toast-msg">Done.</span>
+    </div>
+
+    <script>
+      // Sidebar
+      function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("open");
+        document.getElementById("sb-overlay").classList.toggle("active");
+      }
+      function closeSidebar() {
+        document.getElementById("sidebar").classList.remove("open");
+        document.getElementById("sb-overlay").classList.remove("active");
+      }
+
+      // Submenu
+      function toggleSub(id, chevId) {
+        const el = document.getElementById(id);
+        const chev = document.getElementById(chevId);
+        const isHidden = el.classList.contains("hidden");
+        el.classList.toggle("hidden", !isHidden);
+        el.classList.toggle("flex", isHidden);
+        if (chev) chev.style.transform = isHidden ? "rotate(180deg)" : "";
+      }
+
+      // Dropdowns
+      function toggleDd(id) {
+        document.getElementById(id).classList.toggle("open");
+      }
+      document.addEventListener("click", (e) => {
+        ["notif-dd", "user-dd"].forEach((id) => {
+          const dd = document.getElementById(id);
+          if (dd && !dd.closest("div").contains(e.target))
+            dd.classList.remove("open");
+        });
+      });
+
+      // Toast
+      let _tt;
+      function showToast(msg, type) {
+        const t = document.getElementById("toast");
+        document.getElementById("toast-msg").textContent = msg;
+        t.querySelector("i").className =
+          type === "success"
+            ? "fa-solid fa-circle-check text-emerald-400"
+            : "fa-solid fa-circle-exclamation text-red-400";
+        t.classList.add("show");
+        clearTimeout(_tt);
+        _tt = setTimeout(() => t.classList.remove("show"), 2800);
+      }
+
+      // Toggle tag
+      function ht(swId, tagId, onL, offL) {
+        const sw = document.getElementById(swId);
+        const tag = document.getElementById(tagId);
+        if (sw.checked) {
+          tag.className =
+            "text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 flex items-center gap-1";
+          tag.innerHTML = `<i class="fa-solid fa-circle text-[5px]"></i> ${onL}`;
+        } else {
+          tag.className =
+            "text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#232b3e] text-tm flex items-center gap-1";
+          tag.innerHTML = `<i class="fa-solid fa-circle text-[5px]"></i> ${offL}`;
+        }
+        showToast("Settings saved.", "success");
+      }
+
+      // Danger modal
+      function confirmReset(title, desc) {
+        document.getElementById("dm-title").textContent = title;
+        document.getElementById("dm-desc").textContent = desc;
+        document.getElementById("dm-step1").classList.remove("hidden");
+        document.getElementById("dm-step2").classList.add("hidden");
+        document.getElementById("dm-inp").value = "";
+        const btn = document.getElementById("dm-final");
+        btn.classList.add("opacity-40", "pointer-events-none");
+        document.getElementById("danger-modal").classList.add("open");
+      }
+      function closeDM() {
+        document.getElementById("danger-modal").classList.remove("open");
+      }
+      function dmStep2() {
+        document.getElementById("dm-step1").classList.add("hidden");
+        document.getElementById("dm-step2").classList.remove("hidden");
+        document.getElementById("dm-inp").focus();
+      }
+      function checkDM() {
+        const v = document.getElementById("dm-inp").value;
+        const btn = document.getElementById("dm-final");
+        if (v === "CONFIRM") {
+          btn.classList.remove("opacity-40", "pointer-events-none");
+        } else {
+          btn.classList.add("opacity-40", "pointer-events-none");
+        }
+      }
+      function doDM() {
+        closeDM();
+        showToast("Action executed.", "success");
+      }
+      document
+        .getElementById("danger-modal")
+        .addEventListener("click", function (e) {
+          if (e.target === this) closeDM();
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1113 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit User – DIU Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ["Bricolage Grotesque", "sans-serif"],
+              body: ["Nunito", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Nunito:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    />
+
+    <style>
+      body {
+        font-family: "Nunito", sans-serif;
+        background: #0f1923;
+      }
+      #sidebar {
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .sb-sub {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.28s ease;
+      }
+      .sb-sub.open {
+        max-height: 200px;
+      }
+      ::-webkit-scrollbar {
+        width: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1e3040;
+        border-radius: 99px;
+      }
+      .dd {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(6px);
+        transition: all 0.2s;
+      }
+      .dd.open {
+        opacity: 1;
+        pointer-events: all;
+        transform: translateY(0);
+      }
+      #toast {
+        transform: translateY(120%);
+        transition: transform 0.3s;
+      }
+      #toast.show {
+        transform: translateY(0);
+      }
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.5;
+          transform: scale(1.4);
+        }
+      }
+      .pulse {
+        animation: pulse-dot 1.6s ease-in-out infinite;
+      }
+
+      .form-input,
+      .form-select,
+      .form-textarea {
+        width: 100%;
+        background: #0d1821;
+        border: 1px solid #1e3040;
+        border-radius: 0.625rem;
+        padding: 0.6rem 0.875rem;
+        font-size: 0.8125rem;
+        color: #e2e8f0;
+        font-family: "Nunito", sans-serif;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .form-input:focus,
+      .form-select:focus,
+      .form-textarea:focus {
+        border-color: #0ea5a8;
+        box-shadow: 0 0 0 3px rgba(14, 165, 168, 0.12);
+      }
+      .form-input[readonly] {
+        color: #4b6882;
+        cursor: not-allowed;
+      }
+      .form-input::placeholder,
+      .form-textarea::placeholder {
+        color: #3d5a6d;
+      }
+      .form-select option {
+        background: #0d1821;
+      }
+      .form-textarea {
+        resize: vertical;
+        min-height: 84px;
+      }
+
+      /* Password toggle */
+      .pass-wrap {
+        position: relative;
+      }
+      .pass-wrap .toggle-eye {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #4b6882;
+        cursor: pointer;
+        font-size: 13px;
+        padding: 2px 4px;
+        transition: color 0.2s;
+      }
+      .pass-wrap .toggle-eye:hover {
+        color: #0ea5a8;
+      }
+      .pass-wrap .form-input {
+        padding-right: 2.2rem;
+      }
+
+      /* Avatar upload */
+      #av-wrap {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        background: #0d1821;
+        border: 2px solid #1e3040;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #22d3d8;
+        font-size: 22px;
+        cursor: pointer;
+        overflow: hidden;
+        position: relative;
+        flex-shrink: 0;
+        transition: border-color 0.2s;
+      }
+      #av-wrap:hover {
+        border-color: #0ea5a8;
+      }
+      .av-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(14, 165, 168, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 16px;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      #av-wrap:hover .av-overlay {
+        opacity: 1;
+      }
+
+      @media (max-width: 768px) {
+        #sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100%;
+          z-index: 50;
+          transform: translateX(-100%);
+        }
+        #sidebar.open {
+          transform: translateX(0);
+        }
+        #sb-overlay.show {
+          opacity: 1;
+          pointer-events: all;
+        }
+      }
+    </style>
+  </head>
+  <body class="text-slate-200 min-h-screen">
+    <div
+      id="sb-overlay"
+      class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none hidden md:hidden"
+      onclick="closeSidebar()"
+    ></div>
+
+    <div class="flex h-screen overflow-hidden">
+      <!-- ═══════════ SIDEBAR ═══════════ -->
+      <aside
+        id="sidebar"
+        class="w-60 flex-shrink-0 bg-[#0d1821] border-r border-[#1e3040] flex flex-col z-50"
+      >
+        <div
+          class="flex items-center gap-3 px-5 py-5 border-b border-[#1e3040]"
+        >
+          <div
+            class="w-9 h-9 rounded-xl bg-[rgba(14,165,168,0.12)] border border-[#0ea5a8]/30 flex items-center justify-center text-[#22d3d8] text-sm"
+          >
+            <i class="fa-solid fa-bus-simple"></i>
+          </div>
+          <span class="font-display font-bold text-lg text-white"
+            >DIU<span class="text-[#0ea5a8]">Admin</span></span
+          >
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4 px-2 flex flex-col gap-0.5">
+          <a
+            href="dashboard.html"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
+          >
+            <i class="fa-solid fa-gauge-high w-4 text-center"></i
+            ><span>Dashboard</span>
+          </a>
+          <!-- Users – active -->
+          <button
+            onclick="toggleSub('sub-users', this)"
+            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-[#22d3d8] bg-[rgba(14,165,168,0.13)] border-l-[2.5px] border-[#0ea5a8]"
+          >
+            <i class="fa-solid fa-users w-4 text-center"></i
+            ><span class="flex-1 text-left">Users</span>
+            <i
+              class="fa-solid fa-chevron-down text-[10px] chevron rotate-180 transition-transform"
+            ></i>
+          </button>
+          <div class="sb-sub open pl-7" id="sub-users">
+            <a
+              href="users.html"
+              class="flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-[#22d3d8] rounded-lg hover:bg-white/5 transition-colors"
+              ><i class="fa-solid fa-list w-3"></i> All Users</a
+            >
+            <a
+              href="add-user.html"
+              class="flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-[#22d3d8] rounded-lg hover:bg-white/5 transition-colors"
+              ><i class="fa-solid fa-user-plus w-3"></i> Add User</a
+            >
+          </div>
+          <button
+            onclick="toggleSub('sub-cars', this)"
+            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
+          >
+            <i class="fa-solid fa-bus w-4 text-center"></i
+            ><span class="flex-1 text-left">Cars / Buses</span>
+            <i
+              class="fa-solid fa-chevron-down text-[10px] chevron transition-transform"
+            ></i>
+          </button>
+          <div class="sb-sub pl-7" id="sub-cars">
+            <a
+              href="cars.html"
+              class="flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-[#22d3d8] rounded-lg hover:bg-white/5 transition-colors"
+              ><i class="fa-solid fa-list w-3"></i> All Cars</a
+            >
+            <a
+              href="add-car.html"
+              class="flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-[#22d3d8] rounded-lg hover:bg-white/5 transition-colors"
+              ><i class="fa-solid fa-plus w-3"></i> Add Car</a
+            >
+          </div>
+          <div class="my-2 border-t border-[#1e3040]"></div>
+          <a
+            href="#"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
+            ><i class="fa-solid fa-gear w-4 text-center"></i
+            ><span>Settings</span></a
+          >
+          <a
+            href="#"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
+            ><i class="fa-solid fa-user-circle w-4 text-center"></i
+            ><span>Profile</span></a
+          >
+        </nav>
+        <div class="p-3 border-t border-[#1e3040]">
+          <button
+            onclick="if (confirm('Logout?')) location.href = '#';"
+            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-red-400 hover:bg-red-500/10 transition-colors"
+          >
+            <i class="fa-solid fa-right-from-bracket w-4 text-center"></i
+            ><span>Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- ═══════════ MAIN ═══════════ -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Topbar -->
+        <header
+          class="h-16 bg-[#0d1821]/80 backdrop-blur border-b border-[#1e3040] flex items-center px-4 gap-4 flex-shrink-0 z-30"
+        >
+          <button
+            onclick="toggleSidebar()"
+            class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors md:hidden"
+          >
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <div>
+            <div
+              class="font-display font-bold text-white text-sm leading-tight"
+            >
+              Edit User
+            </div>
+            <div class="text-xs text-slate-500">Update user information</div>
+          </div>
+          <div class="flex-1"></div>
+          <div class="flex items-center gap-2">
+            <!-- Notifications -->
+            <div class="relative">
+              <button
+                onclick="toggleDd('notif-dd')"
+                class="relative w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-colors"
+              >
+                <i class="fa-regular fa-bell text-sm"></i>
+                <span
+                  class="absolute top-1.5 right-1.5 w-4 h-4 bg-[#0ea5a8] text-white text-[9px] font-bold rounded-full flex items-center justify-center"
+                  >4</span
+                >
+              </button>
+              <div
+                id="notif-dd"
+                class="dd absolute right-0 top-11 w-72 bg-[#162130] border border-[#1e3040] rounded-2xl shadow-2xl overflow-hidden z-50"
+              >
+                <div
+                  class="flex items-center justify-between px-4 py-3 border-b border-[#1e3040]"
+                >
+                  <span
+                    class="font-display font-bold text-sm text-white flex items-center gap-2"
+                    ><i class="fa-solid fa-bell text-[#0ea5a8] text-xs"></i
+                    >Notifications</span
+                  >
+                  <button
+                    class="text-[11px] text-[#0ea5a8] font-semibold hover:underline"
+                  >
+                    Mark all read
+                  </button>
+                </div>
+                <div class="divide-y divide-[#1e3040]">
+                  <div class="flex gap-3 px-4 py-3 bg-white/[0.02]">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[#0ea5a8]/15 flex items-center justify-center text-[#22d3d8] text-xs flex-shrink-0 mt-0.5"
+                    >
+                      <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-slate-200">
+                        New student registered
+                      </div>
+                      <div class="text-[11px] text-slate-500">
+                        Karim Hassan joined
+                      </div>
+                      <div class="text-[10px] text-slate-600 mt-0.5">
+                        2 min ago
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex gap-3 px-4 py-3 bg-white/[0.02]">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-orange-500/15 flex items-center justify-center text-orange-400 text-xs flex-shrink-0 mt-0.5"
+                    >
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-slate-200">
+                        Route 07 delayed
+                      </div>
+                      <div class="text-[11px] text-slate-500">
+                        Driver reported 20 min delay
+                      </div>
+                      <div class="text-[10px] text-slate-600 mt-0.5">
+                        15 min ago
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex gap-3 px-4 py-3">
+                    <div
+                      class="w-8 h-8 rounded-xl bg-[#0ea5a8]/15 flex items-center justify-center text-[#22d3d8] text-xs flex-shrink-0 mt-0.5"
+                    >
+                      <i class="fa-solid fa-bus"></i>
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-slate-200">
+                        Bus B maintenance due
+                      </div>
+                      <div class="text-[11px] text-slate-500">
+                        Schedule service soon
+                      </div>
+                      <div class="text-[10px] text-slate-600 mt-0.5">
+                        1 hr ago
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="px-4 py-2.5 border-t border-[#1e3040] text-center">
+                  <a
+                    href="#"
+                    class="text-xs text-[#0ea5a8] font-semibold hover:underline"
+                    >View all</a
+                  >
+                </div>
+              </div>
+            </div>
+            <!-- User -->
+            <div class="relative">
+              <button
+                onclick="toggleDd('user-dd')"
+                class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-[#1e3040] hover:bg-white/10 transition-colors"
+              >
+                <div
+                  class="w-7 h-7 rounded-lg bg-[#0ea5a8]/20 flex items-center justify-center text-[#22d3d8] text-xs"
+                >
+                  <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <div class="hidden sm:block">
+                  <div class="text-xs font-bold text-slate-200 leading-tight">
+                    Admin
+                  </div>
+                  <div class="text-[10px] text-slate-500 leading-tight">
+                    Super Admin
+                  </div>
+                </div>
+                <i
+                  class="fa-solid fa-chevron-down text-[9px] text-slate-500 hidden sm:block"
+                ></i>
+              </button>
+              <div
+                id="user-dd"
+                class="dd absolute right-0 top-11 w-52 bg-[#162130] border border-[#1e3040] rounded-2xl shadow-2xl overflow-hidden z-50"
+              >
+                <div
+                  class="flex items-center gap-3 px-4 py-3 border-b border-[#1e3040]"
+                >
+                  <div
+                    class="w-9 h-9 rounded-xl bg-[#0ea5a8]/20 flex items-center justify-center text-[#22d3d8]"
+                  >
+                    <i class="fa-solid fa-user-shield"></i>
+                  </div>
+                  <div>
+                    <div class="text-sm font-bold text-slate-200">
+                      Admin User
+                    </div>
+                    <div class="text-[11px] text-slate-500">
+                      admin@diu.edu.bd
+                    </div>
+                  </div>
+                </div>
+                <div class="py-1.5 px-1.5">
+                  <a
+                    href="#"
+                    class="flex items-center gap-2.5 px-3 py-2 text-xs text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-lg transition-colors"
+                    ><i class="fa-regular fa-user w-3"></i>Profile</a
+                  >
+                  <a
+                    href="#"
+                    class="flex items-center gap-2.5 px-3 py-2 text-xs text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-lg transition-colors"
+                    ><i class="fa-solid fa-gear w-3"></i>Settings</a
+                  >
+                  <div class="my-1 border-t border-[#1e3040]"></div>
+                  <a
+                    href="#"
+                    class="flex items-center gap-2.5 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                    ><i class="fa-solid fa-right-from-bracket w-3"></i>Logout</a
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="flex-1 overflow-y-auto p-4 lg:p-6">
+          <!-- Page Header -->
+          <div class="flex items-start justify-between mb-6">
+            <div>
+              <div
+                class="flex items-center gap-1.5 text-[11px] text-slate-500 mb-2"
+              >
+                <a
+                  href="dashboard.html"
+                  class="hover:text-[#0ea5a8] transition-colors"
+                  ><i class="fa-solid fa-house"></i
+                ></a>
+                <i class="fa-solid fa-chevron-right text-[8px]"></i>
+                <a
+                  href="users.html"
+                  class="hover:text-[#0ea5a8] transition-colors"
+                  >Users</a
+                >
+                <i class="fa-solid fa-chevron-right text-[8px]"></i>
+                <span class="text-slate-400">Edit User</span>
+              </div>
+              <h1 class="font-display font-bold text-xl text-white">
+                Edit User
+              </h1>
+              <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
+                <span class="text-slate-300 font-semibold">Rafi Ahmed</span>
+                <span
+                  class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#0ea5a8]/15 text-[#22d3d8]"
+                  >Student</span
+                >
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <a
+                href="show-user.html"
+                class="flex items-center gap-1.5 text-xs font-bold text-slate-400 border border-[#1e3040] bg-white/5 hover:bg-white/10 hover:text-slate-200 px-3.5 py-2 rounded-xl transition-colors"
+              >
+                <i class="fa-solid fa-eye text-[10px]"></i> View Profile
+              </a>
+              <a
+                href="users.html"
+                class="flex items-center gap-2 text-xs font-bold text-slate-400 border border-[#1e3040] bg-white/5 hover:bg-white/10 hover:text-slate-200 px-3.5 py-2 rounded-xl transition-colors"
+              >
+                <i class="fa-solid fa-arrow-left text-[10px]"></i> Back
+              </a>
+            </div>
+          </div>
+
+          <div class="max-w-2xl">
+            <div
+              class="bg-[#162130] border border-[#1e3040] rounded-2xl overflow-hidden"
+            >
+              <!-- ── Avatar Section ── -->
+              <div class="px-6 py-5 border-b border-[#1e3040]">
+                <div class="font-display font-bold text-sm text-slate-200 mb-4">
+                  Profile Photo
+                </div>
+                <div class="flex items-center gap-5">
+                  <div
+                    id="av-wrap"
+                    onclick="document.getElementById('av-inp').click()"
+                  >
+                    <i class="fa-solid fa-user"></i>
+                    <div class="av-overlay">
+                      <i class="fa-solid fa-camera"></i>
+                    </div>
+                    <input
+                      type="file"
+                      id="av-inp"
+                      accept="image/*"
+                      class="hidden"
+                      onchange="previewAv(event)"
+                    />
+                  </div>
+                  <div>
+                    <div class="text-sm font-bold text-slate-200 mb-0.5">
+                      Rafi Ahmed
+                    </div>
+                    <div class="text-xs text-slate-500">
+                      rafi@diu.edu.bd · Student
+                    </div>
+                    <button
+                      onclick="document.getElementById('av-inp').click()"
+                      class="mt-2.5 flex items-center gap-1.5 text-xs font-bold text-slate-400 border border-[#1e3040] bg-white/5 hover:bg-white/10 hover:text-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      <i class="fa-solid fa-camera text-[10px]"></i> Change
+                      Photo
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── Form Fields ── -->
+              <div class="px-6 pt-5 pb-6">
+                <div class="font-display font-bold text-sm text-slate-200 mb-5">
+                  User Information
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <!-- First Name -->
+                  <div class="flex flex-col gap-1.5">
+                    <label
+                      class="text-xs font-bold text-slate-400 flex items-center gap-1.5"
+                    >
+                      <i
+                        class="fa-solid fa-user text-[#0ea5a8] text-[10px]"
+                      ></i>
+                      First Name
+                    </label>
+                    <input
+                      class="form-input"
+                      type="text"
+                      value="Rafi"
+                      id="f-fname"
+                    />
+                  </div>
+
+                  <!-- Last Name -->
+                  <div class="flex flex-col gap-1.5">
+                    <label
+                      class="text-xs font-bold text-slate-400 flex items-center gap-1.5"
+                    >
+                      <i
+                        class="fa-solid fa-user text-[#0ea5a8] text-[10px]"
+                      ></i>
+                      Last Name
+                    </label>
+                    <input
+                      class="form-input"
+                      type="text"
+                      value="Ahmed"
+                      id="f-lname"
+                    />
+                  </div>
+
+                  <!-- Email – full width, readonly -->
+                  <div class="flex flex-col gap-1.5 sm:col-span-2">
+                    <label
+                      class="text-xs font-bold text-slate-400 flex items-center gap-1.5"
+                    >
+                      <i
+                        class="fa-solid fa-envelope text-[#0ea5a8] text-[10px]"
+                      ></i>
+                      Email Address
+                      <span
+                        class="ml-auto flex items-center gap-1 text-[10px] font-normal text-slate-600 bg-slate-700/30 border border-[#1e3040] px-1.5 py-0.5 rounded-md"
+                      >
+                        <i class="fa-solid fa-lock text-[8px]"></i> Readonly
+                      </span>
+                    </label>
+                    <input
+                      class="form-input"
+                      type="email"
+                      value="rafi@diu.edu.bd"
+                      readonly
+                      id="f-email"
+                    />
+                    <p
+                      class="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5"
+                    >
+                      <i
+                        class="fa-brands fa-google text-[10px] text-slate-600"
+                      ></i>
+                      Email is linked to a Google account and cannot be changed
+                      here.
+                    </p>
+                  </div>
+
+                  <!-- Phone – full width -->
+                  <div class="flex flex-col gap-1.5 sm:col-span-2">
+                    <label
+                      class="text-xs font-bold text-slate-400 flex items-center gap-1.5"
+                    >
+                      <i
+                        class="fa-solid fa-phone text-[#0ea5a8] text-[10px]"
+                      ></i>
+                      Phone Number
+                    </label>
+                    <input
+                      class="form-input"
+                      type="tel"
+                      value="+880 1712 111111"
+                      id="f-phone"
+                    />
+                  </div>
+
+                  <!-- Role -->
+                  <div class="flex flex-col gap-1.5">
+                    <label
+                      class="text-xs font-bold text-slate-400 flex items-center gap-1.5"
+                    >
+                      <i
+                        class="fa-solid fa-user-tag text-[#0ea5a8] text-[10px]"
+                      ></i>
+                      Role
+                    </label>
+                    <select
+                      class="form-select"
+                      id="f-role"
+                      onchange="handleRoleChange(this)"
+                    >
+                      <option value="student" selected>Student</option>
+                      <option value="driver">Driver</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+
+                  <!-- Status -->
+                  <div class="flex flex-col gap-1.5">
+                    <label
+                      class="text-xs font-bold text-slate-400 flex items-center gap-1.5"
+                    >
+                      <i
+                        class="fa-solid fa-circle-dot text-[#0ea5a8] text-[10px]"
+                      ></i>
+                      Status
+                    </label>
+                    <select class="form-select" id="f-status">
+                      <option value="active" selected>Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+
+                  <!-- Assigned Route – hidden unless driver -->
+                  <div
+                    class="flex flex-col gap-1.5 sm:col-span-2 hidden"
+                    id="route-group"
+                  >
+                    <label
+                      class="text-xs font-bold text-slate-400 flex items-center gap-1.5"
+                    >
+                      <i
+                        class="fa-solid fa-route text-[#0ea5a8] text-[10px]"
+                      ></i>
+                      Assigned Route
+                      <span class="font-normal text-slate-600"
+                        >(Driver only)</span
+                      >
+                    </label>
+                    <select class="form-select" id="f-route">
+                      <option>Route 04 – Dhanmondi</option>
+                      <option>Route 07 – Mirpur</option>
+                      <option>Route 02 – Uttara</option>
+                      <option>Route 08 – Gazipur</option>
+                      <option>Route 12 – Narayanganj</option>
+                    </select>
+                  </div>
+
+                  <!-- Notes – full width -->
+                  <div class="flex flex-col gap-1.5 sm:col-span-2">
+                    <label
+                      class="text-xs font-bold text-slate-400 flex items-center gap-1.5"
+                    >
+                      <i
+                        class="fa-solid fa-sticky-note text-[#0ea5a8] text-[10px]"
+                      ></i>
+                      Notes
+                    </label>
+                    <textarea class="form-textarea" id="f-notes">
+Final year student, CSE department.</textarea
+                    >
+                  </div>
+
+                  <!-- Reset Password section – full width -->
+                  <div class="sm:col-span-2">
+                    <div id="reset-toggle-wrap">
+                      <button
+                        onclick="toggleResetPassword()"
+                        id="reset-toggle-btn"
+                        class="flex items-center gap-2 text-xs font-bold text-slate-400 border border-[#1e3040] bg-white/5 hover:bg-white/10 hover:text-slate-200 px-4 py-2.5 rounded-xl transition-colors w-full justify-center"
+                      >
+                        <i
+                          class="fa-solid fa-key text-[#0ea5a8] text-[10px]"
+                        ></i>
+                        Reset Password
+                      </button>
+                    </div>
+                    <div
+                      id="reset-password-block"
+                      class="hidden mt-4 p-4 bg-[#0d1821] border border-[#1e3040] rounded-xl"
+                    >
+                      <div
+                        class="text-xs font-bold text-slate-300 mb-3 flex items-center gap-2"
+                      >
+                        <i
+                          class="fa-solid fa-key text-[#0ea5a8] text-[10px]"
+                        ></i>
+                        Set New Password
+                        <button
+                          onclick="toggleResetPassword()"
+                          class="ml-auto text-slate-600 hover:text-slate-400 transition-colors"
+                        >
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                      </div>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="flex flex-col gap-1.5">
+                          <label class="text-xs font-bold text-slate-500"
+                            >New Password</label
+                          >
+                          <div class="pass-wrap">
+                            <input
+                              class="form-input"
+                              type="password"
+                              placeholder="New password"
+                              id="f-newpass"
+                            />
+                            <button
+                              type="button"
+                              class="toggle-eye"
+                              onclick="togglePass('f-newpass', this)"
+                            >
+                              <i class="fa-regular fa-eye"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                          <label class="text-xs font-bold text-slate-500"
+                            >Confirm Password</label
+                          >
+                          <div class="pass-wrap">
+                            <input
+                              class="form-input"
+                              type="password"
+                              placeholder="Confirm password"
+                              id="f-cpass"
+                            />
+                            <button
+                              type="button"
+                              class="toggle-eye"
+                              onclick="togglePass('f-cpass', this)"
+                            >
+                              <i class="fa-regular fa-eye"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Unsaved changes banner -->
+                <div
+                  id="unsaved-banner"
+                  class="hidden mt-4 flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2.5"
+                >
+                  <i
+                    class="fa-solid fa-circle-exclamation text-amber-400 text-sm"
+                  ></i>
+                  <span class="text-xs text-amber-300 font-semibold"
+                    >You have unsaved changes</span
+                  >
+                </div>
+
+                <!-- Actions -->
+                <div
+                  class="flex items-center justify-between pt-5 mt-5 border-t border-[#1e3040]"
+                >
+                  <!-- Danger zone -->
+                  <button
+                    onclick="confirmDelete()"
+                    class="flex items-center gap-1.5 text-xs font-bold text-red-400 border border-red-500/20 bg-red-500/8 hover:bg-red-500/15 px-3.5 py-2.5 rounded-xl transition-colors"
+                  >
+                    <i class="fa-solid fa-user-minus text-[10px]"></i> Delete
+                    User
+                  </button>
+                  <div class="flex items-center gap-2.5">
+                    <a
+                      href="users.html"
+                      class="text-xs font-bold text-slate-400 border border-[#1e3040] bg-white/5 hover:bg-white/10 hover:text-slate-200 px-4 py-2.5 rounded-xl transition-colors"
+                    >
+                      Cancel
+                    </a>
+                    <button
+                      onclick="updateUser()"
+                      class="flex items-center gap-2 text-xs font-bold text-white bg-[#0ea5a8] hover:bg-[#0d9396] px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-[#0ea5a8]/20"
+                    >
+                      <i class="fa-solid fa-floppy-disk"></i> Update User
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <footer
+          class="border-t border-[#1e3040] bg-[#0d1821] px-5 py-3 flex items-center justify-between text-[11px] text-slate-600 flex-shrink-0"
+        >
+          <span>© 2025 DIU Routes · Dhaka International University</span>
+          <span class="flex items-center gap-1.5"
+            ><span
+              class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse inline-block"
+            ></span
+            >Admin Panel</span
+          >
+        </footer>
+      </div>
+    </div>
+
+    <!-- ═══════════ DELETE MODAL ═══════════ -->
+    <div
+      id="del-modal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center"
+    >
+      <div
+        class="bg-[#162130] border border-red-500/20 rounded-2xl p-6 w-[90%] max-w-sm shadow-2xl"
+      >
+        <div class="flex flex-col items-center text-center gap-3 mb-5">
+          <div
+            class="w-12 h-12 rounded-2xl bg-red-500/12 flex items-center justify-center text-red-400 text-lg"
+          >
+            <i class="fa-solid fa-user-minus"></i>
+          </div>
+          <div>
+            <div class="font-display font-bold text-base text-white">
+              Delete Rafi Ahmed?
+            </div>
+            <div class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              This will permanently remove this user account. Type
+              <span class="font-bold text-red-400 font-mono">DELETE</span> to
+              confirm.
+            </div>
+          </div>
+        </div>
+        <input
+          id="del-inp"
+          class="w-full bg-[#0d1821] border border-[#2a1a1a] rounded-xl px-3.5 py-2.5 text-sm font-mono text-red-300 placeholder-[#5a3030] outline-none focus:border-red-500 mb-3 transition-colors"
+          placeholder="Type DELETE"
+          oninput="checkDel()"
+        />
+        <div class="flex gap-2.5">
+          <button
+            onclick="closeDelModal()"
+            class="flex-1 text-xs font-bold text-slate-400 border border-[#1e3040] bg-white/5 hover:bg-white/10 py-2.5 rounded-xl transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            id="del-final"
+            onclick="doDelete()"
+            class="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold text-white bg-red-500 py-2.5 rounded-xl transition-colors opacity-40 pointer-events-none"
+          >
+            <i class="fa-solid fa-user-minus"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div
+      id="toast"
+      class="fixed bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2.5 bg-[#162130] border border-[#1e3040] text-slate-200 text-xs font-semibold px-4 py-2.5 rounded-xl shadow-2xl z-50"
+    >
+      <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i
+      ><span id="toast-msg">Done.</span>
+    </div>
+
+    <script>
+      // Sidebar
+      function toggleSidebar() {
+        const sb = document.getElementById("sidebar"),
+          ov = document.getElementById("sb-overlay");
+        sb.classList.toggle("open");
+        ov.classList.toggle("show");
+        ov.classList.toggle("hidden");
+      }
+      function closeSidebar() {
+        document.getElementById("sidebar").classList.remove("open");
+        const ov = document.getElementById("sb-overlay");
+        ov.classList.remove("show");
+        ov.classList.add("hidden");
+      }
+
+      // Submenu
+      function toggleSub(id, btn) {
+        document.getElementById(id).classList.toggle("open");
+        btn.querySelector(".chevron")?.classList.toggle("rotate-180");
+      }
+
+      // Dropdown
+      function toggleDd(id) {
+        document.querySelectorAll(".dd").forEach((d) => {
+          if (d.id !== id) d.classList.remove("open");
+        });
+        document.getElementById(id).classList.toggle("open");
+      }
+      document.addEventListener("click", (e) => {
+        if (
+          !e.target.closest('[onclick*="toggleDd"]') &&
+          !e.target.closest(".dd")
+        )
+          document
+            .querySelectorAll(".dd")
+            .forEach((d) => d.classList.remove("open"));
+      });
+
+      // Role → route field
+      function handleRoleChange(sel) {
+        const rg = document.getElementById("route-group");
+        rg.classList.toggle("hidden", sel.value !== "driver");
+        markUnsaved();
+      }
+
+      // Unsaved changes tracker
+      const trackIds = [
+        "f-fname",
+        "f-lname",
+        "f-phone",
+        "f-role",
+        "f-status",
+        "f-notes",
+      ];
+      trackIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", markUnsaved);
+      });
+      function markUnsaved() {
+        const b = document.getElementById("unsaved-banner");
+        b.classList.remove("hidden");
+        b.classList.add("flex");
+      }
+
+      // Avatar preview
+      function previewAv(e) {
+        const f = e.target.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = (ev) => {
+          const w = document.getElementById("av-wrap");
+          w.innerHTML = `
+        <img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:16px;"/>
+        <div class="av-overlay"><i class="fa-solid fa-camera"></i></div>
+        <input type="file" id="av-inp" accept="image/*" class="hidden" onchange="previewAv(event)"/>
+      `;
+          w.onclick = () => document.getElementById("av-inp").click();
+        };
+        r.readAsDataURL(f);
+      }
+
+      // Reset password toggle
+      function toggleResetPassword() {
+        const block = document.getElementById("reset-password-block");
+        const isHidden = block.classList.contains("hidden");
+        block.classList.toggle("hidden", !isHidden);
+        if (isHidden) document.getElementById("f-newpass").focus();
+      }
+
+      // Password visibility
+      function togglePass(id, btn) {
+        const inp = document.getElementById(id);
+        const isPass = inp.type === "password";
+        inp.type = isPass ? "text" : "password";
+        btn.innerHTML = isPass
+          ? '<i class="fa-regular fa-eye-slash"></i>'
+          : '<i class="fa-regular fa-eye"></i>';
+      }
+
+      // Update
+      function updateUser() {
+        const newPass = document.getElementById("f-newpass").value;
+        const cPass = document.getElementById("f-cpass").value;
+        if (newPass && newPass !== cPass) {
+          showToast("Passwords do not match.", "error");
+          return;
+        }
+        document.getElementById("unsaved-banner").classList.add("hidden");
+        showToast("User updated successfully!", "success");
+        setTimeout(() => (window.location.href = "users.html"), 1500);
+      }
+
+      // Delete modal
+      function confirmDelete() {
+        document.getElementById("del-modal").classList.remove("hidden");
+        document.getElementById("del-modal").classList.add("flex");
+        document.getElementById("del-inp").value = "";
+        document
+          .getElementById("del-final")
+          .classList.add("opacity-40", "pointer-events-none");
+        setTimeout(() => document.getElementById("del-inp").focus(), 80);
+      }
+      function closeDelModal() {
+        document.getElementById("del-modal").classList.add("hidden");
+        document.getElementById("del-modal").classList.remove("flex");
+      }
+      function checkDel() {
+        const ok = document.getElementById("del-inp").value === "DELETE";
+        document
+          .getElementById("del-final")
+          .classList.toggle("opacity-40", !ok);
+        document
+          .getElementById("del-final")
+          .classList.toggle("pointer-events-none", !ok);
+      }
+      function doDelete() {
+        closeDelModal();
+        showToast("User deleted.", "success");
+        setTimeout(() => (window.location.href = "users.html"), 1500);
+      }
+      document.getElementById("del-modal").addEventListener("click", (e) => {
+        if (e.target === document.getElementById("del-modal")) closeDelModal();
+      });
+
+      // Toast
+      function showToast(msg, type) {
+        const t = document.getElementById("toast");
+        document.getElementById("toast-msg").textContent = msg;
+        document.getElementById("toast-icon").className =
+          type === "error"
+            ? "fa-solid fa-circle-xmark text-red-400"
+            : "fa-solid fa-circle-check text-emerald-400";
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2500);
+      }
+    </script>
+  </body>
+</html>
