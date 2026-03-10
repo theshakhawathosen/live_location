@@ -28,9 +28,10 @@ class DashboardController extends Controller
 
     public function changeState(Request $request)
     {
-        $column = $request->column_name;
+        $column = $request->label;
         if ($column == 'role') {
             return response()->json([
+                'status' => 'error',
                 'message' => "Don't try to be smarter! LOL :)"
             ]);
         } else {
@@ -39,11 +40,27 @@ class DashboardController extends Controller
                 $user->$column = $request->status;
                 $user->save();
 
+                $status = $request->status == 1 ? 'ON' : 'OFF';
+                $online = $request->status == 1 ? 'Online' : 'Offline';
+
+                $message = '';
+                switch ($column) {
+                    case 'show_online':
+                        $message = 'You are ' . $online . ' now!';
+                        break;
+
+                    default:
+                        $message = 'Status Changed!';
+                        break;
+                }
+
                 return response()->json([
-                    'message' => "Status Changes!"
+                    'status' => 'success',
+                    'message' => $message,
                 ]);
             } else {
                 return response()->json([
+                    'status' => 'error',
                     'message' => "Unauthorize Access!"
                 ]);
             }
@@ -52,14 +69,12 @@ class DashboardController extends Controller
 
     public function saveLocation(Request $request)
     {
-        if (Auth::id() == $request->user_id) {
-            $user = Auth::user();
-            $user->lat = $request->lat;
-            $user->lng = $request->lng;
-            $user->save();
-        } else {
-            return "Unauthorize Access!";
-        }
+        $user = Auth::user();
+        $user->lat = $request->lat;
+        $user->lng = $request->lng;
+        $user->save();
+
+        return $user;
     }
 
 

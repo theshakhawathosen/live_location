@@ -703,6 +703,7 @@ html.dark .leaflet-control-zoom a:hover {
 @media (max-width: 480px) {
     #side-panel {
         width: 100vw;
+        color: #;
     }
 
     #panel-toggle.panel-open {

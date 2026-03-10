@@ -173,7 +173,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ asset('assets/student/js/default.js') }}"></script>
     <script src="{{ asset('assets/student/js/student.js') }}"></script>
-    <script src="{{ asset('assets/student/js/request.js') }}"></script>
+    <script src="{{ asset('assets/student/js/functions.js') }}"></script>
+    <script src="{{ asset('assets/student/js/element.js') }}"></script>
 
 
 </body>

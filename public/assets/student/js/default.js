@@ -54,46 +54,6 @@
         });
 
 
-        /* ── Toast System ── */
-        const switchMeta = {
-            'sw-online': {
-                label: 'User Online',
-                icon: 'fa-wifi'
-            },
-            'sw-mute': {
-                label: 'Mute Notifications',
-                icon: 'fa-bell-slash'
-            },
-            'sw-routes': {
-                label: 'Show Routes',
-                icon: 'fa-road'
-            },
-            'sw-bus': {
-                label: 'Show Bus',
-                icon: 'fa-bus'
-            },
-            'sw-hiace': {
-                label: 'Show Hiace',
-                icon: 'fa-van-shuttle'
-            },
-            'sw-stops': {
-                label: 'Show Stops',
-                icon: 'fa-location-dot'
-            },
-            'sw-students': {
-                label: 'Show Students',
-                icon: 'fa-user-group'
-            },
-            'sw-traffic': {
-                label: 'Traffic Layer',
-                icon: 'fa-traffic-light'
-            },
-            'sw-myloc': {
-                label: 'My Location',
-                icon: 'fa-street-view'
-            },
-        };
-
         function showToast(type, label) {
             const container = document.getElementById('toast-container');
             const t = document.createElement('div');
@@ -110,30 +70,6 @@
             }, 2500);
         }
 
-        function handleSwitch(input, rowId) {
-            const id = input.id;
-            const on = input.checked;
-            const meta = switchMeta[id] || {
-                label: id
-            };
-
-            // Online row pulse animation
-            if (id === 'sw-online') {
-                const row = document.getElementById('online-row');
-                on ? row.classList.add('online-active') : row.classList.remove('online-active');
-            }
-
-            // Traffic Layer → error, revert toggle
-            if (id === 'sw-traffic') {
-                input.checked = false;
-                showToast('error', 'Traffic Layer — Not Available');
-                return;
-            }
-
-            // All others → success
-            const action = on ? 'Enabled' : 'Disabled';
-            showToast('success', `${meta.label} — ${action}`);
-        }
 
         // Init online row state
         document.getElementById('online-row').classList.add('online-active');
