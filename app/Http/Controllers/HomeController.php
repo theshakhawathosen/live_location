@@ -15,4 +15,9 @@ class HomeController extends Controller
     {
         return view('auth.login');
     }
+
+    public function redirect()
+    {
+        return redirect_based_on_role();
+    }
 }

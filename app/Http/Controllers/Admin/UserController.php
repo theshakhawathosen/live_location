@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class UserController extends Controller
@@ -24,7 +25,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('admin.users.add-user');
+        return view('admin.users.create');
     }
 
     /**
@@ -38,7 +39,7 @@ class UserController extends Controller
             'phone' => 'nullable|numeric|max_digits:11',
             'role' => 'required|in:admin,student,driver',
             'status' => 'required|in:active,inactive',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
@@ -50,15 +51,7 @@ class UserController extends Controller
         $validatedData['password'] = Hash::make(time());
         User::create($validatedData);
 
-        return redirect()->route('user.index')->with('success', 'User added successfully!');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
+        return redirect()->route('admin.user.index')->with('success', 'User added successfully!');
     }
 
     /**
@@ -66,26 +59,56 @@ class UserController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $user = User::findOrFail($id);
+        return view('admin.users.edit', compact('user'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $user = User::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:250',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'phone' => 'nullable|numeric|max_digits:11',
+            'role' => 'required|in:admin,student,driver',
+            'status' => 'required|in:active,inactive',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+
+            // delete old photo
+            if ($user->photo) {
+                $oldPath = str_replace(asset('storage/') . '/', '', $user->photo);
+                Storage::disk('public')->delete($oldPath);
+            }
+
+            $path = $request->file('photo')->store('user', 'public');
+            $imageURL = asset('storage/' . $path);
+
+            $validatedData['photo'] = $imageURL;
+        }
+
+        $user->update($validatedData);
+
+        return redirect()->route('admin.user.index')
+            ->with('success', 'User updated successfully!');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function delete(string $id)
     {
-        //
+        User::findOrFail($id)->delete();
+        return back()->with('success', 'User Deleted!');
     }
 
-    public function toggleStatus($id, $status)
+    public function toggle($id, $status)
     {
         $user = User::findOrFail($id);
         $user->status = $status == 'active' ? 'inactive' : 'active';

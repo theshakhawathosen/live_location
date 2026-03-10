@@ -16,9 +16,6 @@
 
 @push('css')
     <style>
-        /* ────────────────────────────────────────────
-                                                                                                       THEME TOKENS  (swap light/dark via .dark on <html>)
-                                                                                                    ──────────────────────────────────────────── */
         :root {
             --bg: #f0f4f8;
             --card-bg: #ffffff;
@@ -446,72 +443,6 @@
             color: var(--accent);
         }
 
-        /* ── Delete modal ── */
-        #delete-modal {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, .55);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .22s;
-            backdrop-filter: blur(4px);
-        }
-
-        #delete-modal.show {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .modal-box {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 22px;
-            padding: 28px;
-            width: 340px;
-            max-width: calc(100vw - 32px);
-            box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
-            transform: scale(.94);
-            transition: transform .22s;
-        }
-
-        #delete-modal.show .modal-box {
-            transform: scale(1);
-        }
-
-        .modal-delete-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 14px;
-            background: rgba(239, 68, 68, .12);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--red);
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-
-        .btn-delete-confirm {
-            width: 100%;
-            padding: 9px 16px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 800;
-            background: var(--red);
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            transition: opacity .15s;
-            font-family: "Nunito", sans-serif;
-        }
-
-        .btn-delete-confirm:hover {
-            opacity: .88;
-        }
 
         /* ── Breadcrumb ── */
         .breadcrumb {
@@ -607,101 +538,14 @@
                     <span style="color:var(--txt-2);font-weight:700;">Users</span>
                 </div>
                 <h1 class="font-display font-extrabold text-2xl" style="color:var(--txt-1);">All Users</h1>
-                <p class="text-sm mt-0.5" style="color:var(--txt-m);">{{ $totalUsers ?? 0 }} total users registered</p>
+                <p class="text-sm mt-0.5" style="color:var(--txt-m);">{{ $users->total() ?? 0 }} total users registered</p>
             </div>
-            <a href="{{ route('user.create') }}" class="btn-primary self-start">
+            <a href="{{ route('admin.user.create') }}" class="btn-primary self-start">
                 <i class="fa-solid fa-user-plus text-[13px]"></i> Add User
             </a>
         </div>
 
-        {{-- ── Stat cards ── --}}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
 
-            {{-- Total --}}
-            <div class="stat-card c-teal">
-                <div class="flex items-start justify-between mb-3">
-                    <div class="stat-icon-teal w-9 h-9 rounded-xl flex items-center justify-center text-sm">
-                        <i class="fa-solid fa-users"></i>
-                    </div>
-                    <span class="stat-label-teal text-[10px] font-bold px-2 py-0.5 rounded-lg">Total</span>
-                </div>
-                <div class="font-display font-extrabold text-2xl" style="color:var(--txt-1);">{{ $totalUsers ?? 1332 }}
-                </div>
-                <div class="text-xs mt-0.5" style="color:var(--txt-m);">Registered users</div>
-            </div>
-
-            {{-- Students --}}
-            <div class="stat-card c-teal">
-                <div class="flex items-start justify-between mb-3">
-                    <div class="stat-icon-cyan w-9 h-9 rounded-xl flex items-center justify-center text-sm">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                    </div>
-                    <span class="stat-label-cyan text-[10px] font-bold px-2 py-0.5 rounded-lg">Students</span>
-                </div>
-                <div class="font-display font-extrabold text-2xl" style="color:var(--txt-1);">{{ $totalStudents ?? 1284 }}
-                </div>
-                <div class="text-xs mt-0.5" style="color:var(--txt-m);">Active learners</div>
-            </div>
-
-            {{-- Drivers --}}
-            <div class="stat-card c-orange">
-                <div class="flex items-start justify-between mb-3">
-                    <div class="stat-icon-orange w-9 h-9 rounded-xl flex items-center justify-center text-sm">
-                        <i class="fa-solid fa-car"></i>
-                    </div>
-                    <span class="stat-label-orange text-[10px] font-bold px-2 py-0.5 rounded-lg">Drivers</span>
-                </div>
-                <div class="font-display font-extrabold text-2xl" style="color:var(--txt-1);">{{ $totalDrivers ?? 48 }}
-                </div>
-                <div class="text-xs mt-0.5" style="color:var(--txt-m);">Fleet operators</div>
-            </div>
-
-            {{-- Admins --}}
-            <div class="stat-card c-violet">
-                <div class="flex items-start justify-between mb-3">
-                    <div class="stat-icon-violet w-9 h-9 rounded-xl flex items-center justify-center text-sm">
-                        <i class="fa-solid fa-user-shield"></i>
-                    </div>
-                    <span class="stat-label-violet text-[10px] font-bold px-2 py-0.5 rounded-lg">Admins</span>
-                </div>
-                <div class="font-display font-extrabold text-2xl" style="color:var(--txt-1);">{{ $totalAdmins ?? 5 }}</div>
-                <div class="text-xs mt-0.5" style="color:var(--txt-m);">System managers</div>
-            </div>
-
-        </div>
-
-        {{-- ── Filter bar ── --}}
-        <div class="filter-bar mb-4">
-            <div class="flex flex-wrap gap-2.5 items-center">
-
-                {{-- Search --}}
-                <div class="filter-input flex items-center gap-2.5 flex-1 min-w-[200px]" style="padding:0;">
-                    <span class="pl-3.5 shrink-0 text-[13px]" style="color:var(--txt-m);">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </span>
-                    <input id="search-input" type="text" placeholder="Search name, email or phone…"
-                        class="flex-1 bg-transparent text-sm font-semibold focus:outline-none"
-                        style="color:var(--txt-1);padding:9px 14px 9px 6px;border:none;background:transparent;font-family:'Nunito',sans-serif;" />
-                </div>
-
-                <select id="role-filter" class="filter-select">
-                    <option value="">All Roles</option>
-                    <option value="student">Student</option>
-                    <option value="driver">Driver</option>
-                    <option value="admin">Admin</option>
-                </select>
-
-                <select id="status-filter" class="filter-select">
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-
-                <button id="btn-reset" class="btn-outline">
-                    <i class="fa-solid fa-rotate-left text-[11px]"></i> Reset
-                </button>
-            </div>
-        </div>
 
         {{-- ── Table card ── --}}
         <div class="table-card">
@@ -713,10 +557,6 @@
                     <span id="filter-pill"
                         class="hidden filter-pill text-[10px] font-bold px-2 py-0.5 rounded-lg">Filtered</span>
                 </div>
-                <button id="btn-export" class="btn-outline text-[12px]" style="padding:7px 14px;">
-                    <i class="fa-solid fa-file-export text-[11px]"></i>
-                    <span class="hidden sm:inline">Export</span>
-                </button>
             </div>
 
             {{-- Table --}}
@@ -758,10 +598,7 @@
                                     ->implode('');
                             @endphp
 
-                            <tr data-name="{{ strtolower($user['name'] ?? '') }}"
-                                data-email="{{ strtolower($user['email'] ?? '') }}"
-                                data-phone="{{ $user['phone'] ?? '' }}" data-role="{{ $role }}"
-                                data-status="{{ $status }}">
+                            <tr>
                                 {{-- User --}}
                                 <td style="padding-left:20px;">
                                     <div class="flex items-center gap-3">
@@ -776,7 +613,7 @@
                                             <div class="text-sm font-bold" style="color:var(--txt-1);">
                                                 {{ $user['name'] ?? 'Unknown' }}</div>
                                             <div class="text-[11px]" style="color:var(--txt-m);">
-                                                {{ $user['uid'] ?? '–' }}</div>
+                                                {{ $user->last_login ? $user->last_login->diffForHumans() : '–' }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -813,32 +650,34 @@
                                     <div class="flex items-center justify-center gap-1 pr-2">
 
                                         {{-- Edit --}}
-                                        <a href="{{ route('user.edit', $user['id'] ?? 0) }}" class="act-btn"
+                                        <a href="{{ route('admin.user.edit', $user['id'] ?? 0) }}" class="act-btn"
                                             title="Edit">
                                             <i class="fa-solid fa-pen"></i>
                                         </a>
 
-                                        {{-- Toggle status --}}
-                                        @if ($status === 'active')
-                                            <a href="{{ route('user.toggleStatus', ['id' => $user['id'], 'status' => $status]) }}"
-                                                class="act-btn act-warn" title="Deactivate"
-                                                onclick="return confirm('Deactivate this user?')">
-                                                <i class="fa-solid fa-ban"></i>
-                                            </a>
-                                        @else
-                                            <a href="{{ route('user.toggleStatus', ['id' => $user['id'], 'status' => $status]) }}"
-                                                class="act-btn act-green" title="Activate"
-                                                onclick="return confirm('Activate this user?')">
-                                                <i class="fa-solid fa-check-circle"></i>
+                                        {{-- Delete --}}
+                                        @if (Auth::user()->id !== $user->id)
+                                            {{-- Toggle status --}}
+                                            @if ($status === 'active')
+                                                <a href="{{ route('admin.user.toggle', ['id' => $user['id'], 'status' => $status]) }}"
+                                                    class="act-btn act-warn" title="Deactivate"
+                                                    onclick="return confirm('Deactivate this user?')">
+                                                    <i class="fa-solid fa-ban"></i>
+                                                </a>
+                                            @else
+                                                <a href="{{ route('admin.user.toggle', ['id' => $user['id'], 'status' => $status]) }}"
+                                                    class="act-btn act-green" title="Activate"
+                                                    onclick="return confirm('Activate this user?')">
+                                                    <i class="fa-solid fa-check-circle"></i>
+                                                </a>
+                                            @endif
+
+                                            <a onclick="return confirm('Are you sure?')"
+                                                href="{{ route('admin.user.delete', ['id' => $user->id]) }}"
+                                                class="act-btn act-danger " title="Delete">
+                                                <i class="fa-solid fa-trash-can"></i>
                                             </a>
                                         @endif
-
-                                        {{-- Delete --}}
-                                        <button class="act-btn act-danger " id="showDeleteModal" title="Delete"
-                                            data-id="{{ $user['id'] }}" data-name="{{ $user['name'] }}"
-                                            type="button">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                        </button>
 
                                     </div>
                                 </td>
@@ -901,33 +740,6 @@
 
     </main>
 
-    {{-- ── Delete confirm modal ── --}}
-    <div id="delete-modal">
-        <div class="modal-box">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="modal-delete-icon"><i class="fa-solid fa-trash-can"></i></div>
-                <div>
-                    <div class="font-display font-bold text-base" style="color:var(--txt-1);">Delete User</div>
-                    <div class="text-xs" style="color:var(--txt-m);">This action cannot be undone</div>
-                </div>
-            </div>
-            <p class="text-sm mb-5" style="color:var(--txt-2);">
-                Are you sure you want to permanently delete
-                <strong id="delete-name" style="color:var(--txt-1);"></strong>?
-                All associated data will be removed.
-            </p>
-            <div class="flex gap-2.5">
-                <button id="btn-cancel-delete" class="btn-outline flex-1" style="justify-content:center;">Cancel</button>
-                <form id="delete-form" method="POST" style="flex:1;">
-                    @csrf @method('DELETE')
-                    <input type="hidden" id="userID">
-                    <button type="submit" class="btn-delete-confirm">
-                        <i class="fa-solid fa-trash-can mr-1.5 text-[11px]"></i> Delete
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @push('js')
@@ -977,80 +789,7 @@
                 filterUsers();
             });
 
-            /* ── Delete modal ── */
-            const modal = document.getElementById('delete-modal');
-            const deleteNameEl = document.getElementById('delete-name');
-            const deleteForm = document.getElementById('delete-form');
-            const userIdInput = document.getElementById('userID');
-            const cancelBtn = document.getElementById('btn-cancel-delete');
 
-            const deleteUrl = (id) => `/admin/users/${id}`;
-
-            function openDeleteModal({
-                id,
-                name
-            }) {
-                deleteNameEl.textContent = name || 'this user';
-                userIdInput.value = id || '';
-                deleteForm.action = deleteUrl(id);
-                modal.classList.add('show');
-            }
-
-            function closeDeleteModal() {
-                modal.classList.remove('show');
-            }
-
-            document.addEventListener('click', (e) => {
-                // 1) Delete button click
-                const btn = e.target.closest('#showDeleteModal, .showDeleteModal, [data-delete="user"]');
-                if (btn) {
-                    const id = btn.dataset.id;
-                    const name = btn.dataset.name;
-                    openDeleteModal({
-                        id,
-                        name
-                    });
-                    return;
-                }
-
-                // 2) Cancel button click
-                if (e.target.closest('#btn-cancel-delete')) {
-                    closeDeleteModal();
-                    return;
-                }
-
-                // 3) Click outside modal-box closes
-                if (e.target === modal) {
-                    closeDeleteModal();
-                    return;
-                }
-            });
-
-            // ====== ESC closes ======
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeDeleteModal();
-            });
-
-
-            /* ── Export CSV ── */
-            document.getElementById('btn-export').addEventListener('click', () => {
-                const rows = [...tbody.querySelectorAll('tr')].filter(r => r.style.display !== 'none');
-                let csv = 'Name,UID,Email,Phone,Role,Status\n';
-                rows.forEach(r => {
-                    const cells = r.querySelectorAll('td');
-                    const name = cells[0]?.querySelector('.font-bold')?.textContent.trim() ?? '';
-                    const uid = cells[0]?.querySelector('.text-\\[11px\\]')?.textContent.trim() ?? '';
-                    const email = cells[1]?.textContent.trim() ?? '';
-                    const phone = cells[2]?.textContent.trim() ?? '';
-                    csv +=
-                        `"${name}","${uid}","${email}","${phone}","${r.dataset.role}","${r.dataset.status}"\n`;
-                });
-                const a = Object.assign(document.createElement('a'), {
-                    href: 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv),
-                    download: 'diu-users.csv'
-                });
-                a.click();
-            });
 
             /* ── Init count ── */
             const total = tbody.querySelectorAll('tr').length;

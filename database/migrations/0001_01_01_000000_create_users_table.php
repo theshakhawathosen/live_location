@@ -20,7 +20,19 @@ return new class extends Migration
             $table->string('password');
             $table->enum('role', ["student", "driver", "admin"])->default('student');
             $table->enum('status', ["active", "inactive", "suspend"])->default('active');
+            $table->decimal('lat', 10, 7)->nullable();
+            $table->decimal('lng', 10, 7)->nullable();
             $table->timestamp('last_login')->nullable();
+            $table->boolean('show_online')->default(false);
+            $table->boolean('show_notification')->default(false);
+            $table->boolean('show_routes')->default(false);
+            $table->boolean('show_bus')->default(false);
+            $table->boolean('show_hiace')->default(false);
+            $table->boolean('show_stop')->default(false);
+            $table->boolean('show_campus')->default(false);
+            $table->boolean('show_students')->default(false);
+            $table->boolean('show_mylocation')->default(false);
+            $table->boolean('high_accuracy')->default(false);
             $table->timestamps();
         });
 

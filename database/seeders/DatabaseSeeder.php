@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Database\Seeders\Admin\AdminSettingSeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -19,10 +20,14 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::create([
-            'name' => 'Driver',
+            'name' => 'Admin',
             'email' => 'shakhawat9083@gmail.com',
-            'role' => 'driver',
+            'role' => 'admin',
             'password' => Hash::make(time()),
+        ]);
+
+        $this->call([
+            AdminSettingSeeder::class,
         ]);
     }
 }
