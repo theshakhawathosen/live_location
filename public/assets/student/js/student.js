@@ -1,25 +1,25 @@
 // =============================
 // MAP INIT
 // =============================
-const map = L.map('map');
+const map = L.map("map");
 // =============================
 // MAP TILE
 // =============================
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     opacity: 1,
-    attribution: '© OpenStreetMap contributors'
+    attribution: "© OpenStreetMap contributors",
 }).addTo(map);
 
 // =============================
 // USER DATA FROM BLADE
 // =============================
-const user_photo = document.getElementById('user_photo').value;
-const user_email = document.getElementById('user_email').value;
-const user_id = document.getElementById('user_id').value;
-const user_name = document.getElementById('user_name').value;
-const csrf_token = document.getElementById('csrf_token').value;
-const my_lat = document.getElementById('my_lat').value;
-const my_lng = document.getElementById('my_lng').value;
+const user_photo = document.getElementById("user_photo").value;
+const user_email = document.getElementById("user_email").value;
+const user_id = document.getElementById("user_id").value;
+const user_name = document.getElementById("user_name").value;
+const csrf_token = document.getElementById("csrf_token").value;
+const my_lat = document.getElementById("my_lat").value;
+const my_lng = document.getElementById("my_lng").value;
 
 // =============================
 //  DATA OPTION
@@ -46,26 +46,21 @@ let campusLayer = L.layerGroup().addTo(map);
 let studentLayer = L.layerGroup().addTo(map);
 let myLayer = L.layerGroup().addTo(map);
 
-
-
 // =============================
 // Default Value
 // =============================
 const Accuracy = highAccuracy.checked ? true : false;
 let DefaultZoom = 14;
-let MyCurrentLocation = [my_lat,my_lng];
+let MyCurrentLocation = [my_lat, my_lng];
 const campusLocation = [23.7939385, 90.4470228];
 const busStopLocation = [23.7978725, 90.4251619];
-
 
 const vehicleMarkers = {};
 
 map.setView(MyCurrentLocation, 14);
 
-
-// Demo Bus Data
 async function loadInitialVehicles() {
-    const res = await fetch('/student/get-vehicles-data/'+user_id);
+    const res = await fetch("/student/get-vehicles-data/" + user_id);
     const data = await res.json();
     renderVehicleMarkers(data);
 }
@@ -73,15 +68,10 @@ async function loadInitialVehicles() {
 loadInitialVehicles();
 
 setInterval(async () => {
-    const res = await fetch('/student/get-vehicles-data/'+user_id);
+    const res = await fetch("/student/get-vehicles-data/" + user_id);
     const data = await res.json();
     updateVehiclePositions(data);
 }, 2000);
-
-
-
-
-
 
 // USER ICON
 const myIcon = L.divIcon({
@@ -96,7 +86,7 @@ const myIcon = L.divIcon({
     </div>
     `,
     iconSize: [50, 50],
-    iconAnchor: [25, 50]
+    iconAnchor: [25, 50],
 });
 
 // CAMPUS ICON
@@ -114,7 +104,7 @@ const campusIcon = L.divIcon({
         </div>
     `,
     iconSize: [50, 50],
-    iconAnchor: [25, 50]
+    iconAnchor: [25, 50],
 });
 
 // STOP ICON
@@ -132,7 +122,7 @@ const stopIcon = L.divIcon({
     </div>
     `,
     iconSize: [50, 50],
-    iconAnchor: [25, 50]
+    iconAnchor: [25, 50],
 });
 
 // Bus Icon
@@ -149,7 +139,7 @@ function createBusIcon() {
             </div>
         `,
         iconSize: [50, 50],
-        iconAnchor: [25, 50]
+        iconAnchor: [25, 50],
     });
 }
 
@@ -167,7 +157,7 @@ function createHiaceIcon() {
             </div>
         `,
         iconSize: [50, 50],
-        iconAnchor: [25, 50]
+        iconAnchor: [25, 50],
     });
 }
 
@@ -175,16 +165,15 @@ function createHiaceIcon() {
 // Markers
 // =============================
 const myMarker = L.marker(MyCurrentLocation, {
-    icon: myIcon
+    icon: myIcon,
 }).bindPopup(user_name);
 
 const campusMarker = L.marker(campusLocation, {
-    icon: campusIcon
+    icon: campusIcon,
 }).bindPopup("DIU Campus");
 
-
 const stopMarker = L.marker(busStopLocation, {
-    icon: stopIcon
+    icon: stopIcon,
 }).bindPopup("Bus Stop");
 
 function renderVehicleMarkers(vehicles) {
@@ -192,11 +181,12 @@ function renderVehicleMarkers(vehicles) {
     busLayer.clearLayers();
     hiaceLayer.clearLayers();
 
-    vehicles.forEach(vehicle => {
+    vehicles.forEach((vehicle) => {
         const latlng = [vehicle.lat, vehicle.lng];
 
         // Icon select
-        const icon = vehicle.type === "bus" ? createBusIcon() : createHiaceIcon();
+        const icon =
+            vehicle.type === "bus" ? createBusIcon() : createHiaceIcon();
 
         // Popup content
         const popupContent = `
@@ -205,7 +195,7 @@ function renderVehicleMarkers(vehicles) {
                 🚗 Driver: ${vehicle.driver}<br>
                 🛣️ Route: ${vehicle.route}<br>
                 🔢 Plate: ${vehicle.plate}<br>
-                🟢 Status: <span style="color:${vehicle.status === 'running' ? 'green' : 'red'}">${vehicle.status}</span>
+                🟢 Status: <span style="color:${vehicle.status === "running" ? "green" : "red"}">${vehicle.status}</span>
             </div>
         `;
 
@@ -224,32 +214,81 @@ function renderVehicleMarkers(vehicles) {
     });
 }
 
+function updateVehiclePositions(vehicles) {
+    vehicles.forEach((vehicle) => {
+        const latlng = [vehicle.lat, vehicle.lng];
+        const marker = vehicleMarkers[vehicle.id];
 
+        if ((vehicle.lat && vehicle.lng) != null) {
+            if (marker) {
+                // Existing marker — just move it
+                marker.setLatLng(latlng);
+            } else {
+                // New vehicle appeared — render it fresh
+                const icon =
+                    vehicle.type === "bus"
+                        ? createBusIcon()
+                        : createHiaceIcon();
 
+                const popupContent = `
+                <div style="min-width:160px; font-family: sans-serif;">
+                    <b>${vehicle.name}</b><br>
+                    🚗 Driver: ${vehicle.driver}<br>
+                    🛣️ Route: ${vehicle.route}<br>
+                    🔢 Plate: ${vehicle.plate}<br>
+                    🟢 Status: <span style="color:${vehicle.status === "running" ? "green" : "red"}">${vehicle.status}</span>
+                </div>
+            `;
+
+                const newMarker = L.marker(latlng, { icon }).bindPopup(
+                    popupContent,
+                );
+
+                if (vehicle.type === "bus") {
+                    busLayer.addLayer(newMarker);
+                } else {
+                    hiaceLayer.addLayer(newMarker);
+                }
+
+                vehicleMarkers[vehicle.id] = newMarker;
+            }
+        }
+    });
+
+    // Remove markers for vehicles no longer in the response
+    const activeIds = new Set(vehicles.map((v) => v.id));
+    Object.keys(vehicleMarkers).forEach((id) => {
+        if (!activeIds.has(Number(id))) {
+            const marker = vehicleMarkers[id];
+            busLayer.removeLayer(marker);
+            hiaceLayer.removeLayer(marker);
+            delete vehicleMarkers[id];
+        }
+    });
+}
 
 // =============================
 // Check
 // =============================
 
-
 // My Layer
-if(showMyLocation.checked){
+if (showMyLocation.checked) {
     myLayer.addLayer(myMarker);
     map.addLayer(myLayer);
 }
 
 // Campus Layer
-if(showCampus.checked){
+if (showCampus.checked) {
     campusLayer.addLayer(campusMarker);
     map.addLayer(campusLayer);
 }
 
 // Stop Layer
-if(showStops.checked){
+if (showStops.checked) {
     stopLayer.addLayer(stopMarker);
     map.addLayer(stopLayer);
 }
-// Bus Layer 
+// Bus Layer
 if (showBus.checked) {
     map.addLayer(busLayer);
 }
@@ -259,81 +298,64 @@ if (showHiace.checked) {
     map.addLayer(hiaceLayer);
 }
 
-
 // Toggle
 
 // My Layer
-showMyLocation.addEventListener("change", function () 
-{
-    if (this.checked)
-    {
+showMyLocation.addEventListener("change", function () {
+    if (this.checked) {
         myLayer.addLayer(myMarker);
         map.addLayer(myLayer);
-        change_state(user_id,'show_mylocation',1);
-    } 
-    else {
+        change_state(user_id, "show_mylocation", 1);
+    } else {
         myLayer.removeLayer(myMarker);
         map.removeLayer(myLayer);
-        change_state(user_id,'show_mylocation',0);
+        change_state(user_id, "show_mylocation", 0);
     }
-
 });
 
 // Campus
-showCampus.addEventListener("change", function () 
-{
-    if (this.checked)
-    {
+showCampus.addEventListener("change", function () {
+    if (this.checked) {
         campusLayer.addLayer(campusMarker);
         map.addLayer(campusLayer);
-        change_state(user_id,'show_campus',1);
-    } 
-    else {
+        change_state(user_id, "show_campus", 1);
+    } else {
         campusLayer.removeLayer(campusMarker);
         map.removeLayer(campusLayer);
-        change_state(user_id,'show_campus',0);
+        change_state(user_id, "show_campus", 0);
     }
-
 });
 
 // Stop
-showStops.addEventListener("change", function () 
-{
-    if (this.checked)
-    {
+showStops.addEventListener("change", function () {
+    if (this.checked) {
         stopLayer.addLayer(stopMarker);
         map.addLayer(stopLayer);
-        change_state(user_id,'show_stop',1);
-    } 
-    else {
+        change_state(user_id, "show_stop", 1);
+    } else {
         stopLayer.removeLayer(stopMarker);
         map.removeLayer(stopLayer);
-        change_state(user_id,'show_stop',0);
+        change_state(user_id, "show_stop", 0);
     }
-
 });
 
 // Accuracy
-highAccuracy.addEventListener("change", function () 
-{
-    if (this.checked)
-    {
-        change_state(user_id,'high_accuracy',1);
-    } 
-    else {
-        change_state(user_id,'high_accuracy',0);
+highAccuracy.addEventListener("change", function () {
+    if (this.checked) {
+        change_state(user_id, "high_accuracy", 1);
+    } else {
+        change_state(user_id, "high_accuracy", 0);
     }
-
 });
 
 // Bus toggle
 showBus.addEventListener("change", function () {
     if (this.checked) {
         map.addLayer(busLayer);
-        change_state(user_id, 'show_bus', 1);
+        change_state(user_id, "show_bus", 1);
     } else {
         map.removeLayer(busLayer);
-        change_state(user_id, 'show_bus', 0);
+        change_state(user_id, "show_bus", 0);
     }
 });
 
@@ -341,18 +363,12 @@ showBus.addEventListener("change", function () {
 showHiace.addEventListener("change", function () {
     if (this.checked) {
         map.addLayer(hiaceLayer);
-        change_state(user_id, 'show_hiace', 1);
+        change_state(user_id, "show_hiace", 1);
     } else {
         map.removeLayer(hiaceLayer);
-        change_state(user_id, 'show_hiace', 0);
+        change_state(user_id, "show_hiace", 0);
     }
 });
-
-
-
-
-
-
 
 // if (navigator.geolocation) {
 
@@ -401,14 +417,8 @@ showHiace.addEventListener("change", function () {
 
 // }
 
-
 // =============================
 // NAVIGATION BUTTON
 // =============================
 
-
-
-
-
 // Test
-
